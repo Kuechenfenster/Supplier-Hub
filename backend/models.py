@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
 import enum
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@localhost:5432/supplier_hub")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@db:5432/supplier_hub")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
