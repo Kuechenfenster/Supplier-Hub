@@ -20,10 +20,11 @@ COPY static/ ./static/
 # Copy frontend
 COPY index.html ./static/
 
-# Copy and run migration script
-COPY backend/migrate.py .
-RUN python migrate.py
+# Copy entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8080
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "backend/main.py"]

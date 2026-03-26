@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
 """Database migration script for Management Portal"""
 import os
-from sqlalchemy import create_engine, text
+import time
+from sqlalchemy import create_engine, text, exc
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@localhost:5432/supplier_hub")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@db:5432/supplier_hub")
 
-engine = create_engine(DATABASE_URL)
+max_retries = 30
+retry_delay = 2
+
+for attempt in range(max_retries):
+    try:
+        engine = create_engine(DATABASE_URL)
+        with engine.connect() as conn:
+            print("✅ Database connection successful!")
+            break
+    except exc.OperationalError as e:
+        if attempt < max_retries - 1:
+            print(f"⏳ Waiting for database... (attempt {attempt + 1}/{max_retries})")
+            time.sleep(retry_delay)
+        else:
+            print(f"❌ Could not connect to database after {max_retries} attempts")
+            raise
 
 migrations = [
     # Internal Users table
@@ -68,7 +84,7 @@ migrations = [
     """CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at DESC)""",
 ]
 
-print("Running database migrations...")
+print("\nRunning database migrations...")
 with engine.connect() as conn:
     for i, sql in enumerate(migrations, 1):
         try:
@@ -76,6 +92,6 @@ with engine.connect() as conn:
             conn.commit()
             print(f"  [{i}/{len(migrations)}] ✓ Migration {i} completed")
         except Exception as e:
-            print(f"  [{i}/{len(migrations)}] ⚠ Migration {i} skipped or already exists: {str(e)[:50]}")
+            print(f"  [{i}/{len(migrations)}] ⚠ Migration {i} skipped or already exists")
 
 print("\n✅ Database migrations completed!")
