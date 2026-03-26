@@ -30,21 +30,22 @@ class InternalUser(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=True)  # NULL until password set
+    password_hash = Column(String(255), nullable=True)
     full_name = Column(String(100), nullable=False)
     invitation_code = Column(String(50), unique=True, nullable=False, index=True)
     invitation_used = Column(Boolean, default=False)
     invitation_expires = Column(DateTime, nullable=False)
     role = Column(String(20), nullable=False, default="viewer")
     department_id = Column(Integer, ForeignKey("departments.id"))
-    is_active = Column(Boolean, default=True)  # Soft delete flag
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
     created_by = Column(Integer, ForeignKey("internal_users.id"))
     
-    department = relationship("Department", back_populates="users")
-    created_by_user = relationship("InternalUser", remote_side=[id])
+    # Explicit foreign_keys to avoid ambiguity
+    department = relationship("Department", back_populates="users", foreign_keys=[department_id])
+    created_by_user = relationship("InternalUser", remote_side=[id], foreign_keys=[created_by])
 
 # Departments
 class Department(Base):
@@ -58,7 +59,7 @@ class Department(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    users = relationship("InternalUser", back_populates="department")
+    users = relationship("InternalUser", back_populates="department", foreign_keys=[InternalUser.department_id])
 
 # Suppliers (extended)
 class Supplier(Base):
@@ -83,8 +84,8 @@ class AuditLog(Base):
     action = Column(String(50), nullable=False)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer)
-    old_value = Column(Text)  # JSON string
-    new_value = Column(Text)  # JSON string
+    old_value = Column(Text)
+    new_value = Column(Text)
     ip_address = Column(String(45))
     created_at = Column(DateTime, default=datetime.utcnow)
 
