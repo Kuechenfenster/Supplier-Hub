@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import or_
-from passlib.context import CryptContext
+import bcrypt
 from jose import jwt, JWTError
 import uvicorn
 
@@ -24,7 +24,6 @@ JWT_EXPIRY = int(os.getenv("JWT_EXPIRY", "3600"))
 INVITATION_EXPIRY_DAYS = 7
 
 # Security
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
 
 # FastAPI app
@@ -87,10 +86,15 @@ class SupplierUpdate(BaseModel):
 
 # Helper functions
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
 
 def generate_invitation_code() -> str:
     chars = string.ascii_uppercase + string.digits
