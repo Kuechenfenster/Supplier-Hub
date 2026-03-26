@@ -5,120 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Portal</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header img {
-            display: block;
-            margin: 0 auto 15px;
-            max-height: 80px;
-            max-width: 200px;
-            height: auto;
-            background: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert.success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .container { max-width: 500px; width: 100%; background: white; border-radius: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header img { display: block; margin: 0 auto 15px; max-height: 80px; max-width: 200px; height: auto; background: white; padding: 8px 15px; border-radius: 8px; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .content { padding: 40px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 14px; }
+        .form-group input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .alert.success { background: #d4edda; color: #155724; }
+        .alert.error { background: #f8d7da; color: #721c24; }
+        .suppliers-list { margin-top: 30px; }
+        .supplier-item { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .supplier-item h4 { color: #667eea; margin-bottom: 5px; }
+        .supplier-item p { color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -151,43 +59,91 @@
                     <label>Confirm Password *</label>
                     <input type="password" id="factoryConfirmPassword" placeholder="Confirm password" required>
                 </div>
-                <button type="submit" class="btn">Register Factory</button>
+                <button type="submit" class="btn" id="submitBtn">Register Factory</button>
             </form>
+            <div class="suppliers-list" id="suppliersList"></div>
         </div>
     </div>
     <script>
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const API_URL = '';
+        
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const alert = document.getElementById('registerAlert');
+            
             const name = document.getElementById('factoryName').value;
             const email = document.getElementById('factoryEmail').value;
             const code = document.getElementById('factoryCode').value;
             const password = document.getElementById('factoryPassword').value;
             const confirmPassword = document.getElementById('factoryConfirmPassword').value;
-            const alert = document.getElementById('registerAlert');
 
             if (password !== confirmPassword) {
-                alert.textContent = 'Passwords do not match!';
-                alert.className = 'alert error';
-                alert.style.display = 'block';
+                showAlert('Passwords do not match!', 'error');
                 return;
             }
 
-            let suppliers = JSON.parse(localStorage.getItem('suppliers')) || [];
-            if (suppliers.find(s => s.code === code)) {
-                alert.textContent = 'Supplier code already exists!';
-                alert.className = 'alert error';
-                alert.style.display = 'block';
-                return;
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+
+            try {
+                const response = await fetch(API_URL + '/api/suppliers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, code, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Registration successful! Supplier ID: ' + data.id, 'success');
+                    document.getElementById('registerForm').reset();
+                    loadSuppliers();
+                } else {
+                    showAlert(data.detail || 'Registration failed!', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Register Factory';
             }
-
-            suppliers.push({ name, email, code, password, materials: [] });
-            localStorage.setItem('suppliers', JSON.stringify(suppliers));
-
-            alert.textContent = 'Registration successful!';
-            alert.className = 'alert success';
-            alert.style.display = 'block';
-            setTimeout(() => document.getElementById('registerForm').reset(), 1500);
         });
+
+        async function loadSuppliers() {
+            try {
+                const response = await fetch(API_URL + '/api/suppliers');
+                const suppliers = await response.json();
+                const container = document.getElementById('suppliersList');
+                
+                if (suppliers.length === 0) {
+                    container.innerHTML = '<p style="color:#999;text-align:center;">No suppliers registered yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = '<h3 style="margin-bottom:15px;color:#333;">Registered Suppliers</h3>' + 
+                    suppliers.map(s => `
+                        <div class="supplier-item">
+                            <h4>${s.name}</h4>
+                            <p><strong>Code:</strong> ${s.code}</p>
+                            <p><strong>Email:</strong> ${s.email}</p>
+                        </div>
+                    `).join('');
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('registerAlert');
+            alert.textContent = message;
+            alert.className = 'alert ' + type;
+            alert.style.display = 'block';
+            setTimeout(() => { alert.style.display = 'none'; }, 5000);
+        }
+
+        // Load suppliers on page load
+        loadSuppliers();
     </script>
 </body>
 </html>
