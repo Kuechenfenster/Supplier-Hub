@@ -16,5 +16,14 @@ python backend/migrate.py
 echo "🔧 Initializing admin user..."
 python backend/init_db.py || true
 
-echo "✅ Startup complete! Starting web server..."
+echo ""
+echo "=========================================="
+echo "  SUPPLIER HUB IS READY!"
+echo "=========================================="
+echo "  Management Portal: http://localhost:8080/management"
+echo "  Login: admin / master1312"
+echo "  ⚠️  CHANGE PASSWORD AFTER FIRST LOGIN!"
+echo "=========================================="
+echo ""
+
 exec "$@"
