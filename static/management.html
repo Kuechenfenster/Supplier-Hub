@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f5f6fa; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; }
+        .header-info { display: flex; align-items: center; gap: 20px; }
+        .user-info { text-align: right; }
+        .user-info .name { font-weight: 600; }
+        .user-info .role { font-size: 12px; opacity: 0.8; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        .main { display: flex; }
+        .sidebar { width: 250px; background: white; min-height: calc(100vh - 60px); padding: 20px 0; border-right: 1px solid #e0e0e0; }
+        .sidebar button { width: 100%; padding: 12px 20px; border: none; background: none; text-align: left; cursor: pointer; color: #333; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .sidebar button:hover { background: #f5f6fa; }
+        .sidebar button.active { background: #1a1a2e; color: white; }
+        .sidebar button .icon { width: 20px; text-align: center; }
+        .content { flex: 1; padding: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h3 { color: #1a1a2e; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f5f6fa; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-card .number { font-size: 36px; font-weight: bold; }
+        .stat-card .label { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn-primary { background: #1a1a2e; color: white; }
+        .btn-primary:hover { background: #16213e; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f5f6fa; font-weight: 600; color: #333; font-size: 13px; }
+        tr:hover { background: #f8f9fa; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-admin { background: #dc3545; color: white; }
+        .badge-manager { background: #007bff; color: white; }
+        .badge-qa { background: #28a745; color: white; }
+        .badge-viewer { background: #6c757d; color: white; }
+        .badge-active { background: #28a745; color: white; }
+        .badge-pending { background: #ffc107; color: #000; }
+        .badge-inactive { background: #6c757d; color: white; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 10px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 20px; color: #1a1a2e; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #1a1a2e; }
+        .invitation-code { background: #f5f6fa; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0; }
+        .invitation-code code { font-size: 24px; font-weight: bold; color: #1a1a2e; letter-spacing: 3px; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .empty { text-align: center; padding: 40px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 Management Portal</h1>
+        <div class="header-info">
+            <div class="user-info">
+                <div class="name" id="currentUserName">Loading...</div>
+                <div class="role" id="currentUserRole">Loading...</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="main">
+        <div class="sidebar">
+            <button class="active" onclick="showTab('dashboard')"><span class="icon">📊</span> Dashboard</button>
+            <button onclick="showTab('users')"><span class="icon">👥</span> Users</button>
+            <button onclick="showTab('departments')"><span class="icon">🏛️</span> Departments</button>
+            <button onclick="showTab('suppliers')"><span class="icon">🏭</span> Suppliers</button>
+            <button onclick="showTab('activity')"><span class="icon">📋</span> Activity Log</button>
+        </div>
+        
+        <div class="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2 style="margin-bottom:20px;color:#1a1a2e;">Dashboard Overview</h2>
+                <div class="stats-grid" id="statsGrid"></div>
+                <div class="card" style="margin-top:20px;">
+                    <h3>Recent Activity</h3>
+                    <div id="recentActivity"><p class="empty">Loading...</p></div>
+                </div>
+            </div>
+            
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h2 style="color:#1a1a2e;">Internal Users</h2>
+                    <button class="btn btn-primary" onclick="showModal('userModal')">+ Add User</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr><th>Username</th><th>Full Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Departments Tab -->
+            <div id="departments" class="tab-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h2 style="color:#1a1a2e;">Departments</h2>
+                    <button class="btn btn-primary" onclick="showModal('deptModal')">+ Add Department</button>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr><th>Code</th><th>Name</th><th>Description</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="deptsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Suppliers Tab -->
+            <div id="suppliers" class="tab-content">
+                <h2 style="color:#1a1a2e;margin-bottom:20px;">All Suppliers</h2>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr><th>Code</th><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="suppliersTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Activity Log Tab -->
+            <div id="activity" class="tab-content">
+                <h2 style="color:#1a1a2e;margin-bottom:20px;">Audit Log</h2>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr><th>Time</th><th>User</th><th>Action</th><th>Entity</th></tr>
+                        </thead>
+                        <tbody id="auditTable"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="close-btn" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <div id="userModalAlert" class="alert"></div>
+            <form id="addUserForm">
+                <div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="newUserEmail" required></div>
+                <div class="form-group"><label>Full Name</label><input type="text" id="newUserFullname" required></div>
+                <div class="form-group"><label>Role</label><select id="newUserRole"><option value="viewer">Viewer</option><option value="qa">QA Manager</option><option value="manager">Department Manager</option><option value="admin">Admin</option></select></div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Create User</button>
+            </form>
+            <div id="invitationResult" style="display:none;">
+                <div class="invitation-code">
+                    <p style="margin-bottom:10px;color:#666;">Invitation Code:</p>
+                    <code id="invitationCode">XXXXXX</code>
+                </div>
+                <p style="text-align:center;color:#666;font-size:14px;">Send this code to the user. They will use it to set their password.</p>
+                <p style="text-align:center;color:#28a745;font-size:12px;margin-top:10px;">Code expires in 7 days</p>
+                <button class="btn btn-primary" style="width:100%;margin-top:15px;" onclick="closeModal('userModal')">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Department Modal -->
+    <div id="deptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Department</h2>
+                <button class="close-btn" onclick="closeModal('deptModal')">&times;</button>
+            </div>
+            <div id="deptModalAlert" class="alert"></div>
+            <form id="addDeptForm">
+                <div class="form-group"><label>Code</label><input type="text" id="newDeptCode" placeholder="e.g., QA" required></div>
+                <div class="form-group"><label>Name</label><input type="text" id="newDeptName" placeholder="e.g., Quality Assurance" required></div>
+                <div class="form-group"><label>Description</label><input type="text" id="newDeptDesc" placeholder="Optional"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Create Department</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let currentUser = null;
+        
+        // Auth check
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/management/login'; return; }
+            currentUser = JSON.parse(localStorage.getItem('user'));
+            document.getElementById('currentUserName').textContent = currentUser.full_name;
+            document.getElementById('currentUserRole').textContent = currentUser.role;
+            loadDashboard();
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/management/login';
+        }
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.closest('button').classList.add('active');
+            if (tabId === 'users') loadUsers();
+            if (tabId === 'departments') loadDepartments();
+            if (tabId === 'suppliers') loadSuppliers();
+            if (tabId === 'activity') loadActivity();
+        }
+        
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.getElementById(id).querySelector('form')?.reset();
+            document.getElementById(id).querySelector('.alert').style.display = 'none';
+            if (id === 'userModal') {
+                document.getElementById('addUserForm').style.display = 'block';
+                document.getElementById('invitationResult').style.display = 'none';
+            }
+        }
+        
+        async function loadDashboard() {
+            const stats = await fetch(API + '/api/admin/dashboard/stats').then(r => r.json());
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card"><div class="number">${stats.total_suppliers}</div><div class="label">Total Suppliers</div></div>
+                <div class="stat-card"><div class="number">${stats.active_suppliers}</div><div class="label">Active Suppliers</div></div>
+                <div class="stat-card"><div class="number">${stats.pending_suppliers}</div><div class="label">Pending Approval</div></div>
+                <div class="stat-card"><div class="number">${stats.active_users}</div><div class="label">Active Users</div></div>
+                <div class="stat-card"><div class="number">${stats.total_departments}</div><div class="label">Departments</div></div>
+            `;
+            const activity = await fetch(API + '/api/admin/dashboard/activity').then(r => r.json());
+            document.getElementById('recentActivity').innerHTML = activity.length ? activity.map(a => 
+                `<div style="padding:10px;border-bottom:1px solid #eee;font-size:13px;"><strong>${a.action}</strong> on ${a.entity_type} by User #${a.user_id}<br><small style="color:#999;">${new Date(a.created_at).toLocaleString()}</small></div>`
+            ).join('') : '<p class="empty">No recent activity</p>';
+        }
+        
+        async function loadUsers() {
+            const users = await fetch(API + '/api/admin/users').then(r => r.json());
+            document.getElementById('usersTable').innerHTML = users.length ? users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td>${u.full_name}</td>
+                    <td>${u.email}</td>
+                    <td><span class="badge badge-${u.role}">${u.role}</span></td>
+                    <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="toggleUser(${u.id}, ${!u.is_active})">${u.is_active ? 'Deactivate' : 'Activate'}</button>
+                        ${currentUser.role === 'admin' ? `<button class="btn btn-sm" style="background:#ffc107" onclick="resetPassword(${u.id})">Reset PW</button>` : ''}
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="7" class="empty">No users found</td></tr>';
+        }
+        
+        async function loadDepartments() {
+            const depts = await fetch(API + '/api/admin/departments').then(r => r.json());
+            document.getElementById('deptsTable').innerHTML = depts.length ? depts.map(d => 
+                `<tr><td><strong>${d.code}</strong></td><td>${d.name}</td><td>${d.description || '-'}</td><td>-</td></tr>`
+            ).join('') : '<tr><td colspan="4" class="empty">No departments</td></tr>';
+        }
+        
+        async function loadSuppliers() {
+            const suppliers = await fetch(API + '/api/suppliers').then(r => r.json());
+            document.getElementById('suppliersTable').innerHTML = suppliers.length ? suppliers.map(s => `
+                <tr><td>${s.code}</td><td>${s.name}</td><td>${s.email}</td><td><span class="badge badge-pending">${s.status || 'pending'}</span></td><td>-</td></tr>
+            `).join('') : '<tr><td colspan="5" class="empty">No suppliers registered</td></tr>';
+        }
+        
+        async function loadActivity() {
+            const logs = await fetch(API + '/api/admin/dashboard/activity?limit=50').then(r => r.json());
+            document.getElementById('auditTable').innerHTML = logs.length ? logs.map(l => 
+                `<tr><td>${new Date(l.created_at).toLocaleString()}</td><td>User #${l.user_id}</td><td>${l.action}</td><td>${l.entity_type}</td></tr>`
+            ).join('') : '<tr><td colspan="4" class="empty">No activity logged</td></tr>';
+        }
+        
+        async function toggleUser(userId, isActive) {
+            await fetch(API + '/api/admin/users/' + userId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: isActive })
+            });
+            loadUsers();
+        }
+        
+        async function resetPassword(userId) {
+            const newPwd = prompt('Enter new temporary password for this user:');
+            if (!newPwd) return;
+            await fetch(API + '/api/admin/auth/reset-password?user_id=' + userId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_password: newPwd })
+            });
+            alert('Password reset successfully!');
+        }
+        
+        document.getElementById('addUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const alert = document.getElementById('userModalAlert');
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(API + '/api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('newUsername').value,
+                        email: document.getElementById('newUserEmail').value,
+                        full_name: document.getElementById('newUserFullname').value,
+                        role: document.getElementById('newUserRole').value
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('addUserForm').style.display = 'none';
+                    document.getElementById('invitationResult').style.display = 'block';
+                    document.getElementById('invitationCode').textContent = data.invitation_code;
+                    setTimeout(() => loadUsers(), 1000);
+                } else {
+                    alert.textContent = data.detail;
+                    alert.className = 'alert alert-error';
+                    alert.style.display = 'block';
+                }
+            } catch (err) {
+                alert.textContent = 'Error: ' + err.message;
+                alert.className = 'alert alert-error';
+                alert.style.display = 'block';
+            }
+            btn.disabled = false;
+        });
+        
+        document.getElementById('addDeptForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await fetch(API + '/api/admin/departments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: document.getElementById('newDeptCode').value,
+                    name: document.getElementById('newDeptName').value,
+                    description: document.getElementById('newDeptDesc').value
+                })
+            });
+            closeModal('deptModal');
+            loadDepartments();
+        });
+        
+        checkAuth();
+    </script>
+</body>
+</html>

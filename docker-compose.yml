@@ -12,10 +12,9 @@ services:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U supplier -d supplier_hub"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
-    restart: always
 
   web:
     build: .
@@ -23,11 +22,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgresql://supplier:supplier123@db:5432/supplier_hub
+      DATABASE_URL: postgresql://supplier:supplier123@db:5432/supplier_hub
+      JWT_SECRET: change-this-secret-in-production
+      JWT_EXPIRY: "3600"
     depends_on:
       db:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
 
 volumes:
   postgres_data:
