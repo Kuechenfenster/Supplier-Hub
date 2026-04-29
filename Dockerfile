@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir pandas openpyxl requests pdfplumber pymupdf
 # Copy application code
 COPY backend/ .
 COPY static/ ./static/
-
+COPY index.html ./
 # Create data directories for BOM uploads and documents
 RUN mkdir -p data/incoming/boms data/documents data/processed data/reports
 
