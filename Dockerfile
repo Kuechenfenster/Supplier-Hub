@@ -13,7 +13,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install additional dependencies for pipeline
-RUN pip install --no-cache-dir pandas openpyxl
+RUN pip install --no-cache-dir pandas openpyxl requests pdfplumber
 
 # Copy application code
 COPY backend/ .

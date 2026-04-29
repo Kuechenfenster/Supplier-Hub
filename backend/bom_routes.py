@@ -214,3 +214,79 @@ async def upload_document(
         return {"message": "Document uploaded", "document_id": doc.id, "file_name": file.filename}
     finally:
         db.close()
+
+
+# Lab Report Extraction
+
+@router.post("/lab-reports/extract")
+async def extract_lab_report_endpoint(
+    file: UploadFile = File(...),
+    report_type: str = "auto",
+    material_id: Optional[str] = None,
+    sku: Optional[str] = None,
+    current_user: InternalUser = Depends(get_current_user)
+):
+    """Upload a PDF lab report and extract structured data using Ollama LLM."""
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="File must be a PDF")
+
+    from pipeline.ingest.lab_extractor import extract_lab_report, save_extraction_to_db
+
+    save_path = os.path.join(DOCUMENT_UPLOAD_DIR, file.filename)
+    with open(save_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    try:
+        result = extract_lab_report(save_path, report_type=report_type)
+
+        if material_id:
+            result["material_id"] = material_id
+        if sku:
+            result["sku"] = sku
+
+        db_result = save_extraction_to_db(result)
+
+        return {
+            "message": "Lab report extracted successfully",
+            "extraction": result,
+            "database": db_result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
+
+
+@router.get("/lab-reports")
+async def list_lab_reports(
+    material_id: Optional[str] = None,
+    sku: Optional[str] = None,
+    current_user: InternalUser = Depends(get_current_user)
+):
+    """List extracted lab reports from TestHistory."""
+    db = pipeline_get_db()
+    try:
+        from pipeline.models.database import TestHistory
+        query = db.query(TestHistory)
+        if material_id:
+            query = query.filter(TestHistory.material_id == material_id)
+        if sku:
+            query = query.filter(TestHistory.sku == sku)
+        reports = query.order_by(TestHistory.created_at.desc()).all()
+        return {
+            "count": len(reports),
+            "reports": [{
+                "id": r.id,
+                "material_id": r.material_id,
+                "report_number": r.report_number,
+                "report_date": r.report_date.isoformat() if r.report_date else None,
+                "lab_name": r.lab_name,
+                "test_standard": r.test_standard,
+                "test_type": r.test_type,
+                "result": r.result,
+                "measured_value": r.measured_value,
+                "limit_value": r.limit_value,
+                "sku": r.sku,
+                "created_at": r.created_at.isoformat() if r.created_at else None
+            } for r in reports]
+        }
+    finally:
+        db.close()

@@ -29,10 +29,14 @@ services:
       PIPELINE_DATABASE_URL: postgresql://supplier:supplier123@db:5432/hti_pipeline
       JWT_SECRET: change-this-secret-in-production
       JWT_EXPIRY: "3600"
+      OLLAMA_HOST: http://host.docker.internal:11434
+      OLLAMA_MODEL: qwen2:7b
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   postgres_data:
