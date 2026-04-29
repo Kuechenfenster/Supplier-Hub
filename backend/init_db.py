@@ -8,15 +8,14 @@ from models import init_db, SessionLocal, InternalUser, Department
 from datetime import datetime, timedelta
 import secrets
 import string
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 # Default admin password - CHANGE AFTER FIRST LOGIN!
 DEFAULT_ADMIN_PASSWORD = "master1312"
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def generate_invitation_code():
     chars = string.ascii_uppercase + string.digits
@@ -37,7 +36,7 @@ def init():
             password_hash=hash_password(DEFAULT_ADMIN_PASSWORD),
             role="admin",
             invitation_code="INITIAL-SETUP",
-            invitation_used=True,  # Already set up
+            invitation_used=True,
             invitation_expires=datetime.utcnow() + timedelta(days=1),
             is_active=True
         )

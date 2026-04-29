@@ -1,27 +1,14 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
-import enum
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@db:5432/supplier_hub")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supplier:supplier123@localhost:5432/supplier_hub")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-class UserRole(str, enum.Enum):
-    admin = "admin"
-    manager = "manager"
-    qa = "qa"
-    viewer = "viewer"
-
-class SupplierStatus(str, enum.Enum):
-    pending = "pending"
-    active = "active"
-    suspended = "suspended"
-    archived = "archived"
 
 # Internal Users (Company Admin/Staff)
 class InternalUser(Base):

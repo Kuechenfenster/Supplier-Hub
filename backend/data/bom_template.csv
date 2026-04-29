@@ -1,0 +1,5 @@
+material_id,material_name,manufacturer_name,manufacturer_code,part_spec_name,supplier_id,supplier_material_id,is_sub_supplier,sub_supplier_id,sku,quantity,unit,component_role,material_type
+MAT-PNT-001,Titanium Dioxide White,BASF SE,BASF-TiO2-R,TiO2 Rutile Grade,SUP-A01,A01-TiO2-W,False,,SKU-TOY-1001,150.0,g,colorant,substance
+MAT-RSN-002,Epoxy Resin Base,Huntsman Corporation,HUNT-EP-4500,Epoxy Resin 2-Part System,SUP-B02,B02-EPX-BASE,False,,SKU-TOY-1001,500.0,g,base,mixture
+MAT-SLV-003,Isopropyl Alcohol,Dow Chemical,DOW-IPA-99,IPA 99.9% Pure,SUP-C03,C03-IPA-99,False,,SKU-TOY-1001,75.0,ml,solvent,substance
+MAT-GEAR-007,Plastic Gear Assembly,Precision Parts GmbH,PP-GEAR-45,Nylon Gear Module 1.5 Z=24,SUP-F06,F06-GEAR-ASM,True,SUB-PP-01,SKU-TOY-1001,2.0,pcs,mechanical,article

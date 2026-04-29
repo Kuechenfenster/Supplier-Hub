@@ -21,7 +21,7 @@
         .sidebar button:hover { background: #f5f6fa; }
         .sidebar button.active { background: #1a1a2e; color: white; }
         .sidebar button .icon { width: 20px; text-align: center; }
-        .content { flex: 1; padding: 30px; }
+        .content { flex: 1; padding: 30px; overflow-y: auto; max-height: calc(100vh - 60px); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -30,9 +30,11 @@
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
         .stat-card .number { font-size: 36px; font-weight: bold; }
         .stat-card .label { font-size: 14px; opacity: 0.9; margin-top: 5px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; display: inline-block; }
         .btn-primary { background: #1a1a2e; color: white; }
         .btn-primary:hover { background: #16213e; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; }
@@ -47,9 +49,14 @@
         .badge-active { background: #28a745; color: white; }
         .badge-pending { background: #ffc107; color: #000; }
         .badge-inactive { background: #6c757d; color: white; }
+        .badge-colorant { background: #667eea; color: white; }
+        .badge-base { background: #28a745; color: white; }
+        .badge-solvent { background: #17a2b8; color: white; }
+        .badge-additive { background: #fd7e14; color: white; }
+        .badge-packaging { background: #6c757d; color: white; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 10px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 10px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .modal-header h2 { font-size: 20px; color: #1a1a2e; }
         .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; }
@@ -57,12 +64,21 @@
         .form-group label { display: block; margin-bottom: 5px; color: #333; font-weight: 600; font-size: 14px; }
         .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; }
         .form-group input:focus { outline: none; border-color: #1a1a2e; }
-        .invitation-code { background: #f5f6fa; padding: 15px; border-radius: 6px; text-align: center; margin: 15px 0; }
-        .invitation-code code { font-size: 24px; font-weight: bold; color: #1a1a2e; letter-spacing: 3px; }
         .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
         .alert-success { background: #d4edda; color: #155724; }
         .alert-error { background: #f8d7da; color: #721c24; }
         .empty { text-align: center; padding: 40px; color: #999; }
+        .upload-zone { border: 3px dashed #ddd; border-radius: 10px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-zone:hover, .upload-zone.dragover { border-color: #667eea; background: #f0f0ff; }
+        .upload-zone .icon { font-size: 48px; margin-bottom: 10px; }
+        .upload-zone p { color: #666; margin-bottom: 10px; }
+        .upload-zone .formats { font-size: 12px; color: #999; }
+        .upload-result { margin-top: 20px; display: none; }
+        .upload-result.show { display: block; }
+        .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .result-label { color: #666; font-size: 14px; }
+        .result-value { font-weight: 600; font-size: 14px; }
+        .template-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -80,10 +96,12 @@
     <div class="main">
         <div class="sidebar">
             <button class="active" onclick="showTab('dashboard')"><span class="icon">📊</span> Dashboard</button>
+            <button onclick="showTab('bom')"><span class="icon">📋</span> BOM Upload</button>
+            <button onclick="showTab('materials')"><span class="icon">🧪</span> Materials</button>
             <button onclick="showTab('users')"><span class="icon">👥</span> Users</button>
             <button onclick="showTab('departments')"><span class="icon">🏛️</span> Departments</button>
             <button onclick="showTab('suppliers')"><span class="icon">🏭</span> Suppliers</button>
-            <button onclick="showTab('activity')"><span class="icon">📋</span> Activity Log</button>
+            <button onclick="showTab('activity')"><span class="icon">📝</span> Activity Log</button>
         </div>
         
         <div class="content">
@@ -94,6 +112,89 @@
                 <div class="card" style="margin-top:20px;">
                     <h3>Recent Activity</h3>
                     <div id="recentActivity"><p class="empty">Loading...</p></div>
+                </div>
+            </div>
+
+            <!-- BOM Upload Tab -->
+            <div id="bom" class="tab-content">
+                <h2 style="margin-bottom:20px;color:#1a1a2e;">📋 BOM Upload & Processing</h2>
+                
+                <div class="card">
+                    <h3>📥 Download BOM Template</h3>
+                    <p style="color:#666;margin-bottom:15px;font-size:14px;">Download the standard BOM template to ensure your data matches the expected format.</p>
+                    <div class="template-buttons">
+                        <a href="/api/bom/template?format=xlsx" class="btn btn-primary">📊 Excel Template (.xlsx)</a>
+                        <a href="/api/bom/template?format=csv" class="btn btn-success">📄 CSV Template (.csv)</a>
+                    </div>
+                    <div style="background:#f8f9fa;padding:15px;border-radius:8px;font-size:13px;color:#555;">
+                        <strong>Required Columns:</strong> material_id, component_name, supplier_id, sku<br>
+                        <strong>Optional Columns:</strong> quantity, unit, component_role<br>
+                        <strong>component_role values:</strong> colorant, base, additive, packaging, solvent, pigment, resin
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📤 Upload BOM File</h3>
+                    <div id="uploadAlert" class="alert" style="display:none;"></div>
+                    
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('bomFile').click()">
+                        <div class="icon">📁</div>
+                        <p><strong>Click to upload</strong> or drag & drop your BOM file</p>
+                        <p class="formats">Supported formats: .xlsx, .xls, .csv</p>
+                        <input type="file" id="bomFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div id="uploadOptions" style="display:none;margin-top:20px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                            <div class="form-group">
+                                <label>BOM ID (optional)</label>
+                                <input type="text" id="bomId" placeholder="Auto-generated if empty">
+                            </div>
+                            <div class="form-group">
+                                <label>Default SKU (optional)</label>
+                                <input type="text" id="defaultSku" placeholder="Override all SKUs">
+                            </div>
+                            <div class="form-group">
+                                <label>Product Name (optional)</label>
+                                <input type="text" id="productName" placeholder="Product name">
+                            </div>
+                            <div class="form-group">
+                                <label>Version</label>
+                                <input type="text" id="bomVersion" value="v1.0">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="uploadBOM()" id="uploadBtn" style="margin-top:10px;">
+                            🚀 Process BOM
+                        </button>
+                    </div>
+
+                    <div class="upload-result" id="uploadResult">
+                        <h3 style="margin-top:20px;color:#1a1a2e;">✅ Processing Result</h3>
+                        <div id="resultDetails"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📋 Recent BOM Records</h3>
+                    <table>
+                        <thead>
+                            <tr><th>BOM ID</th><th>SKU</th><th>Material ID</th><th>Qty</th><th>Unit</th><th>Role</th><th>Source</th></tr>
+                        </thead>
+                        <tbody id="bomRecordsTable"><tr><td colspan="7" class="empty">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Materials Tab -->
+            <div id="materials" class="tab-content">
+                <h2 style="margin-bottom:20px;color:#1a1a2e;">🧪 Material Library</h2>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr><th>Material ID</th><th>Name</th><th>Component</th><th>Supplier</th><th>Category</th><th>CAS</th><th>GHS</th><th>EN 71-3</th></tr>
+                        </thead>
+                        <tbody id="materialsTable"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody>
+                    </table>
                 </div>
             </div>
             
@@ -135,9 +236,9 @@
                 <div class="card">
                     <table>
                         <thead>
-                            <tr><th>Code</th><th>Name</th><th>Email</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>Code</th><th>Name</th><th>Email</th><th>Status</th></tr>
                         </thead>
-                        <tbody id="suppliersTable"><tr><td colspan="5" class="empty">Loading...</td></tr></tbody>
+                        <tbody id="suppliersTable"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -173,12 +274,11 @@
                 <button type="submit" class="btn btn-primary" style="width:100%">Create User</button>
             </form>
             <div id="invitationResult" style="display:none;">
-                <div class="invitation-code">
+                <div style="background:#f5f6fa;padding:15px;border-radius:6px;text-align:center;margin:15px 0;">
                     <p style="margin-bottom:10px;color:#666;">Invitation Code:</p>
-                    <code id="invitationCode">XXXXXX</code>
+                    <code style="font-size:24px;font-weight:bold;color:#1a1a2e;letter-spacing:3px;" id="invitationCode">XXXXXX</code>
                 </div>
-                <p style="text-align:center;color:#666;font-size:14px;">Send this code to the user. They will use it to set their password.</p>
-                <p style="text-align:center;color:#28a745;font-size:12px;margin-top:10px;">Code expires in 7 days</p>
+                <p style="text-align:center;color:#666;font-size:14px;">Send this code to the user to set their password.</p>
                 <button class="btn btn-primary" style="width:100%;margin-top:15px;" onclick="closeModal('userModal')">Done</button>
             </div>
         </div>
@@ -204,8 +304,8 @@
     <script>
         const API = '';
         let currentUser = null;
+        let selectedFile = null;
         
-        // Auth check
         function checkAuth() {
             const token = localStorage.getItem('token');
             if (!token) { window.location.href = '/management/login'; return; }
@@ -213,6 +313,10 @@
             document.getElementById('currentUserName').textContent = currentUser.full_name;
             document.getElementById('currentUserRole').textContent = currentUser.role;
             loadDashboard();
+        }
+        
+        function getHeaders() {
+            return { 'Authorization': 'Bearer ' + localStorage.getItem('token') };
         }
         
         function logout() {
@@ -230,13 +334,16 @@
             if (tabId === 'departments') loadDepartments();
             if (tabId === 'suppliers') loadSuppliers();
             if (tabId === 'activity') loadActivity();
+            if (tabId === 'bom') loadBOMRecords();
+            if (tabId === 'materials') loadMaterials();
         }
         
         function showModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
             document.getElementById(id).querySelector('form')?.reset();
-            document.getElementById(id).querySelector('.alert').style.display = 'none';
+            const alert = document.getElementById(id).querySelector('.alert');
+            if (alert) alert.style.display = 'none';
             if (id === 'userModal') {
                 document.getElementById('addUserForm').style.display = 'block';
                 document.getElementById('invitationResult').style.display = 'none';
@@ -244,89 +351,178 @@
         }
         
         async function loadDashboard() {
-            const stats = await fetch(API + '/api/admin/dashboard/stats').then(r => r.json());
-            document.getElementById('statsGrid').innerHTML = `
-                <div class="stat-card"><div class="number">${stats.total_suppliers}</div><div class="label">Total Suppliers</div></div>
-                <div class="stat-card"><div class="number">${stats.active_suppliers}</div><div class="label">Active Suppliers</div></div>
-                <div class="stat-card"><div class="number">${stats.pending_suppliers}</div><div class="label">Pending Approval</div></div>
-                <div class="stat-card"><div class="number">${stats.active_users}</div><div class="label">Active Users</div></div>
-                <div class="stat-card"><div class="number">${stats.total_departments}</div><div class="label">Departments</div></div>
-            `;
-            const activity = await fetch(API + '/api/admin/dashboard/activity').then(r => r.json());
-            document.getElementById('recentActivity').innerHTML = activity.length ? activity.map(a => 
-                `<div style="padding:10px;border-bottom:1px solid #eee;font-size:13px;"><strong>${a.action}</strong> on ${a.entity_type} by User #${a.user_id}<br><small style="color:#999;">${new Date(a.created_at).toLocaleString()}</small></div>`
-            ).join('') : '<p class="empty">No recent activity</p>';
+            try {
+                const stats = await fetch(API + '/api/admin/dashboard/stats', { headers: getHeaders() }).then(r => r.json());
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card"><div class="number">${stats.total_suppliers}</div><div class="label">Total Suppliers</div></div>
+                    <div class="stat-card"><div class="number">${stats.active_suppliers}</div><div class="label">Active Suppliers</div></div>
+                    <div class="stat-card"><div class="number">${stats.pending_suppliers}</div><div class="label">Pending Approval</div></div>
+                    <div class="stat-card"><div class="number">${stats.active_users}</div><div class="label">Active Users</div></div>
+                    <div class="stat-card"><div class="number">${stats.total_departments}</div><div class="label">Departments</div></div>
+                `;
+                const activity = await fetch(API + '/api/admin/dashboard/activity', { headers: getHeaders() }).then(r => r.json());
+                document.getElementById('recentActivity').innerHTML = activity.length ? activity.map(a => 
+                    '<div style="padding:10px;border-bottom:1px solid #eee;font-size:13px;"><strong>' + a.action + '</strong> on ' + a.entity_type + ' by User #' + a.user_id + '<br><small style="color:#999;">' + new Date(a.created_at).toLocaleString() + '</small></div>'
+                ).join('') : '<p class="empty">No recent activity</p>';
+            } catch(e) { console.error('Dashboard error', e); }
+        }
+        
+        // ─── BOM Upload ────────────────────────────────
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('uploadZone').innerHTML = '<div class="icon">✅</div><p><strong>' + selectedFile.name + '</strong> (' + (selectedFile.size / 1024).toFixed(1) + ' KB)</p><p class="formats">Click to change file</p>';
+                document.getElementById('uploadOptions').style.display = 'block';
+            }
+        }
+
+        const zone = document.getElementById('uploadZone');
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            selectedFile = e.dataTransfer.files[0];
+            if (selectedFile) {
+                zone.innerHTML = '<div class="icon">✅</div><p><strong>' + selectedFile.name + '</strong> (' + (selectedFile.size / 1024).toFixed(1) + ' KB)</p><p class="formats">Click to change file</p>';
+                document.getElementById('uploadOptions').style.display = 'block';
+            }
+        });
+
+        async function uploadBOM() {
+            if (!selectedFile) { showAlert('Please select a file first', 'error'); return; }
+            var btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Processing...';
+            
+            var formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            var bomId = document.getElementById('bomId').value;
+            var defaultSku = document.getElementById('defaultSku').value;
+            var productName = document.getElementById('productName').value;
+            var version = document.getElementById('bomVersion').value;
+            
+            try {
+                var url = API + '/api/bom/upload';
+                var params = new URLSearchParams();
+                if (bomId) params.append('bom_id', bomId);
+                if (defaultSku) params.append('sku', defaultSku);
+                if (productName) params.append('product_name', productName);
+                if (version) params.append('version', version);
+                if (params.toString()) url += '?' + params.toString();
+                
+                var response = await fetch(url, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: formData
+                });
+                
+                var data = await response.json();
+                
+                if (response.ok && data.status === 'success') {
+                    showAlert('BOM processed successfully!', 'success');
+                    document.getElementById('uploadResult').classList.add('show');
+                    var html = '<div class="result-row"><span class="result-label">BOM ID</span><span class="result-value">' + data.bom_id + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">SKU</span><span class="result-value">' + data.sku + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">Total Rows</span><span class="result-value">' + data.total_rows + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">Valid Rows</span><span class="result-value" style="color:#28a745;">' + data.valid_rows + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">Skipped</span><span class="result-value" style="color:#dc3545;">' + data.skipped_rows + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">New Materials</span><span class="result-value">' + (data.materials_added || 0) + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">Updated Materials</span><span class="result-value">' + (data.materials_updated || 0) + '</span></div>';
+                    html += '<div class="result-row"><span class="result-label">BOM Records</span><span class="result-value">' + (data.bom_records_added || 0) + '</span></div>';
+                    if (data.warnings && data.warnings.length) {
+                        html += '<div style="margin-top:10px;padding:10px;background:#fff3cd;border-radius:6px;font-size:13px;"><strong>⚠️ Warnings:</strong><br>' + data.warnings.map(function(w) { return '• ' + w; }).join('<br>') + '</div>';
+                    }
+                    document.getElementById('resultDetails').innerHTML = html;
+                    loadBOMRecords();
+                } else {
+                    showAlert(data.detail || 'Upload failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Connection error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Process BOM';
+            }
+        }
+
+        function showAlert(message, type) {
+            var alert = document.getElementById('uploadAlert');
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type;
+            alert.style.display = 'block';
+            setTimeout(function() { alert.style.display = 'none'; }, 8000);
+        }
+
+        async function loadBOMRecords() {
+            try {
+                var records = await fetch(API + '/api/bom/records', { headers: getHeaders() }).then(function(r) { return r.json(); });
+                document.getElementById('bomRecordsTable').innerHTML = records.length ? records.map(function(r) {
+                    return '<tr><td>' + r.bom_id + '</td><td>' + r.sku + '</td><td><strong>' + r.material_id + '</strong></td><td>' + (r.quantity || '-') + '</td><td>' + (r.unit || '-') + '</td><td><span class="badge badge-' + (r.component_role || 'other') + '">' + (r.component_role || '-') + '</span></td><td>' + (r.source_file || '-') + '</td></tr>';
+                }).join('') : '<tr><td colspan="7" class="empty">No BOM records found</td></tr>';
+            } catch (e) {
+                document.getElementById('bomRecordsTable').innerHTML = '<tr><td colspan="7" class="empty">Error loading records</td></tr>';
+            }
+        }
+
+        async function loadMaterials() {
+            try {
+                var materials = await fetch(API + '/api/bom/materials', { headers: getHeaders() }).then(function(r) { return r.json(); });
+                document.getElementById('materialsTable').innerHTML = materials.length ? materials.map(function(m) {
+                    return '<tr><td><strong>' + m.material_id + '</strong></td><td>' + m.material_name + '</td><td>' + m.component_name + '</td><td>' + m.supplier_id + '</td><td><span class="badge badge-' + (m.category || 'other') + '">' + (m.category || '-') + '</span></td><td>' + (m.cas_number || '-') + '</td><td>' + (m.ghs_classification || '-') + '</td><td>' + (m.en71_3_category || '-') + '</td></tr>';
+                }).join('') : '<tr><td colspan="8" class="empty">No materials in library</td></tr>';
+            } catch (e) {
+                document.getElementById('materialsTable').innerHTML = '<tr><td colspan="8" class="empty">Error loading materials</td></tr>';
+            }
         }
         
         async function loadUsers() {
-            const users = await fetch(API + '/api/admin/users').then(r => r.json());
-            document.getElementById('usersTable').innerHTML = users.length ? users.map(u => `
-                <tr>
-                    <td>${u.username}</td>
-                    <td>${u.full_name}</td>
-                    <td>${u.email}</td>
-                    <td><span class="badge badge-${u.role}">${u.role}</span></td>
-                    <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
-                    <td>${u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger" onclick="toggleUser(${u.id}, ${!u.is_active})">${u.is_active ? 'Deactivate' : 'Activate'}</button>
-                        ${currentUser.role === 'admin' ? `<button class="btn btn-sm" style="background:#ffc107" onclick="resetPassword(${u.id})">Reset PW</button>` : ''}
-                    </td>
-                </tr>
-            `).join('') : '<tr><td colspan="7" class="empty">No users found</td></tr>';
+            var users = await fetch(API + '/api/admin/users', { headers: getHeaders() }).then(function(r) { return r.json(); });
+            document.getElementById('usersTable').innerHTML = users.length ? users.map(function(u) {
+                return '<tr><td>' + u.username + '</td><td>' + u.full_name + '</td><td>' + u.email + '</td><td><span class="badge badge-' + u.role + '">' + u.role + '</span></td><td><span class="badge ' + (u.is_active ? 'badge-active' : 'badge-inactive') + '">' + (u.is_active ? 'Active' : 'Inactive') + '</span></td><td>' + (u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never') + '</td><td><button class="btn btn-sm btn-danger" onclick="toggleUser(' + u.id + ', ' + !u.is_active + ')">' + (u.is_active ? 'Deactivate' : 'Activate') + '</button></td></tr>';
+            }).join('') : '<tr><td colspan="7" class="empty">No users found</td></tr>';
         }
         
         async function loadDepartments() {
-            const depts = await fetch(API + '/api/admin/departments').then(r => r.json());
-            document.getElementById('deptsTable').innerHTML = depts.length ? depts.map(d => 
-                `<tr><td><strong>${d.code}</strong></td><td>${d.name}</td><td>${d.description || '-'}</td><td>-</td></tr>`
-            ).join('') : '<tr><td colspan="4" class="empty">No departments</td></tr>';
+            var depts = await fetch(API + '/api/admin/departments', { headers: getHeaders() }).then(function(r) { return r.json(); });
+            document.getElementById('deptsTable').innerHTML = depts.length ? depts.map(function(d) {
+                return '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td>' + (d.description || '-') + '</td><td>-</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="empty">No departments</td></tr>';
         }
         
         async function loadSuppliers() {
-            const suppliers = await fetch(API + '/api/suppliers').then(r => r.json());
-            document.getElementById('suppliersTable').innerHTML = suppliers.length ? suppliers.map(s => `
-                <tr><td>${s.code}</td><td>${s.name}</td><td>${s.email}</td><td><span class="badge badge-pending">${s.status || 'pending'}</span></td><td>-</td></tr>
-            `).join('') : '<tr><td colspan="5" class="empty">No suppliers registered</td></tr>';
+            var suppliers = await fetch(API + '/api/suppliers').then(function(r) { return r.json(); });
+            document.getElementById('suppliersTable').innerHTML = suppliers.length ? suppliers.map(function(s) {
+                return '<tr><td>' + s.code + '</td><td>' + s.name + '</td><td>' + s.email + '</td><td><span class="badge badge-pending">' + (s.status || 'pending') + '</span></td></tr>';
+            }).join('') : '<tr><td colspan="4" class="empty">No suppliers registered</td></tr>';
         }
         
         async function loadActivity() {
-            const logs = await fetch(API + '/api/admin/dashboard/activity?limit=50').then(r => r.json());
-            document.getElementById('auditTable').innerHTML = logs.length ? logs.map(l => 
-                `<tr><td>${new Date(l.created_at).toLocaleString()}</td><td>User #${l.user_id}</td><td>${l.action}</td><td>${l.entity_type}</td></tr>`
-            ).join('') : '<tr><td colspan="4" class="empty">No activity logged</td></tr>';
+            var logs = await fetch(API + '/api/admin/dashboard/activity?limit=50', { headers: getHeaders() }).then(function(r) { return r.json(); });
+            document.getElementById('auditTable').innerHTML = logs.length ? logs.map(function(l) {
+                return '<tr><td>' + new Date(l.created_at).toLocaleString() + '</td><td>User #' + l.user_id + '</td><td>' + l.action + '</td><td>' + l.entity_type + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="empty">No activity logged</td></tr>';
         }
         
         async function toggleUser(userId, isActive) {
             await fetch(API + '/api/admin/users/' + userId, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: Object.assign({}, getHeaders(), { 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ is_active: isActive })
             });
             loadUsers();
         }
         
-        async function resetPassword(userId) {
-            const newPwd = prompt('Enter new temporary password for this user:');
-            if (!newPwd) return;
-            await fetch(API + '/api/admin/auth/reset-password?user_id=' + userId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_password: newPwd })
-            });
-            alert('Password reset successfully!');
-        }
-        
         document.getElementById('addUserForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const alert = document.getElementById('userModalAlert');
-            const btn = this.querySelector('button[type="submit"]');
+            var alert = document.getElementById('userModalAlert');
+            var btn = this.querySelector('button[type="submit"]');
             btn.disabled = true;
-            
             try {
-                const res = await fetch(API + '/api/admin/users', {
+                var res = await fetch(API + '/api/admin/users', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: Object.assign({}, getHeaders(), { 'Content-Type': 'application/json' }),
                     body: JSON.stringify({
                         username: document.getElementById('newUsername').value,
                         email: document.getElementById('newUserEmail').value,
@@ -334,12 +530,12 @@
                         role: document.getElementById('newUserRole').value
                     })
                 });
-                const data = await res.json();
+                var data = await res.json();
                 if (res.ok) {
                     document.getElementById('addUserForm').style.display = 'none';
                     document.getElementById('invitationResult').style.display = 'block';
                     document.getElementById('invitationCode').textContent = data.invitation_code;
-                    setTimeout(() => loadUsers(), 1000);
+                    setTimeout(function() { loadUsers(); }, 1000);
                 } else {
                     alert.textContent = data.detail;
                     alert.className = 'alert alert-error';
@@ -357,7 +553,7 @@
             e.preventDefault();
             await fetch(API + '/api/admin/departments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: Object.assign({}, getHeaders(), { 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     code: document.getElementById('newDeptCode').value,
                     name: document.getElementById('newDeptName').value,

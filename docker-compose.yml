@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:15-alpine
@@ -8,6 +10,7 @@ services:
       POSTGRES_DB: supplier_hub
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -20,9 +23,10 @@ services:
     build: .
     container_name: supplier-web
     ports:
-      - "8080:8080"
+      - "9000:9000"   # HTI Portal
     environment:
       DATABASE_URL: postgresql://supplier:supplier123@db:5432/supplier_hub
+      PIPELINE_DATABASE_URL: postgresql://supplier:supplier123@db:5432/hti_pipeline
       JWT_SECRET: change-this-secret-in-production
       JWT_EXPIRY: "3600"
     depends_on:
