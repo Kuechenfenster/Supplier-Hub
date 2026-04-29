@@ -30,7 +30,7 @@ services:
       JWT_SECRET: change-this-secret-in-production
       JWT_EXPIRY: "3600"
       OLLAMA_HOST: http://host.docker.internal:11434
-      OLLAMA_MODEL: qwen2:7b
+      OLLAMA_MODEL: qwen3.5:4b
     depends_on:
       db:
         condition: service_healthy

@@ -224,6 +224,7 @@ async def extract_lab_report_endpoint(
     report_type: str = "auto",
     material_id: Optional[str] = None,
     sku: Optional[str] = None,
+    use_vision: bool = True,
     current_user: InternalUser = Depends(get_current_user)
 ):
     """Upload a PDF lab report and extract structured data using Ollama LLM."""
@@ -237,7 +238,7 @@ async def extract_lab_report_endpoint(
         shutil.copyfileobj(file.file, f)
 
     try:
-        result = extract_lab_report(save_path, report_type=report_type)
+        result = extract_lab_report(save_path, report_type=report_type, use_vision=use_vision)
 
         if material_id:
             result["material_id"] = material_id
