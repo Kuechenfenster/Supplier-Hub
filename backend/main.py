@@ -117,9 +117,9 @@ async def login(data: UserLogin, db: SessionLocal = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account disabled")
-    token = create_jwt_token({"sub": str(user.id), "email": user.email, "role": user.role})
+    token = create_jwt_token(user.id, user.username, user.role)
     log_audit(db, user.id, "login", "user", user.id)
-    return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.name, "role": user.role}}
+    return {"token": token, "user": {"id": user.id, "email": user.email, "name": user.full_name, "role": user.role}}
 
 @app.get("/api/auth/me")
 async def me(current_user: InternalUser = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
