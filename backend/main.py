@@ -45,6 +45,28 @@ app.include_router(bom_router)
 # Initialize database
 init_db()
 
+# Frontend HTML Routes
+@app.get("/", response_class=FileResponse)
+async def serve_index():
+    return "index.html"
+
+@app.get("/management", response_class=FileResponse)
+async def serve_management():
+    return "static/management.html"
+
+@app.get("/management-login", response_class=FileResponse)
+async def serve_management_login():
+    return "static/management-login.html"
+
+@app.get("/management-dashboard", response_class=FileResponse)
+async def serve_dashboard():
+    return "static/management-dashboard.html"
+
+@app.get("/supplier", response_class=FileResponse)
+async def serve_supplier():
+    return "index.html"
+
+
 # Pydantic Models
 class UserCreate(BaseModel):
     email: EmailStr
