@@ -36,6 +36,8 @@
         .btn-success { background: #28a745; color: white; }
         .btn-success:hover { background: #218838; }
         .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-warning:hover { background: #e0a800; }
         .btn-sm { padding: 6px 12px; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
@@ -223,7 +225,7 @@
                 <div class="card">
                     <table>
                         <thead>
-                            <tr><th>Code</th><th>Name</th><th>Description</th><th>Actions</th></tr>
+                            <tr><th>Code</th><th>Name</th><th>Location</th><th>Description</th><th>Users</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="deptsTable"></tbody>
                     </table>
@@ -295,8 +297,28 @@
             <form id="addDeptForm">
                 <div class="form-group"><label>Code</label><input type="text" id="newDeptCode" placeholder="e.g., QA" required></div>
                 <div class="form-group"><label>Name</label><input type="text" id="newDeptName" placeholder="e.g., Quality Assurance" required></div>
+                <div class="form-group"><label>Location</label><input type="text" id="newDeptLocation" placeholder="e.g., Berlin, Hamburg, Remote"></div>
                 <div class="form-group"><label>Description</label><input type="text" id="newDeptDesc" placeholder="Optional"></div>
                 <button type="submit" class="btn btn-primary" style="width:100%">Create Department</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Department Modal -->
+    <div id="editDeptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Department</h2>
+                <button class="close-btn" onclick="closeModal('editDeptModal')">&times;</button>
+            </div>
+            <div id="editDeptModalAlert" class="alert"></div>
+            <form id="editDeptForm">
+                <input type="hidden" id="editDeptId">
+                <div class="form-group"><label>Code</label><input type="text" id="editDeptCode" required></div>
+                <div class="form-group"><label>Name</label><input type="text" id="editDeptName" required></div>
+                <div class="form-group"><label>Location</label><input type="text" id="editDeptLocation" placeholder="e.g., Berlin, Hamburg, Remote"></div>
+                <div class="form-group"><label>Description</label><input type="text" id="editDeptDesc" placeholder="Optional"></div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Update Department</button>
             </form>
         </div>
     </div>
@@ -487,8 +509,8 @@
         async function loadDepartments() {
             var depts = await fetch(API + '/api/admin/departments', { headers: getHeaders() }).then(function(r) { return r.json(); });
             document.getElementById('deptsTable').innerHTML = depts.length ? depts.map(function(d) {
-                return '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td>' + (d.description || '-') + '</td><td>-</td></tr>';
-            }).join('') : '<tr><td colspan="4" class="empty">No departments</td></tr>';
+                return '<tr><td><strong>' + d.code + '</strong></td><td>' + d.name + '</td><td>' + (d.location || '-') + '</td><td>' + (d.description || '-') + '</td><td><span class="badge badge-active">' + (d.headcount || 0) + '</span></td><td><button class="btn btn-sm btn-warning" onclick="openEditDept(' + d.id + ', '' + d.code + '', '' + d.name + '', '' + (d.location || '') + '', '' + (d.description || '') + '')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deleteDepartment(' + d.id + ', '' + d.name + '')">Delete</button></td></tr>';
+            }).join('') : '<tr><td colspan="6" class="empty">No departments</td></tr>';
         }
         
         async function loadSuppliers() {
@@ -557,6 +579,7 @@
                 body: JSON.stringify({
                     code: document.getElementById('newDeptCode').value,
                     name: document.getElementById('newDeptName').value,
+                    location: document.getElementById('newDeptLocation').value,
                     description: document.getElementById('newDeptDesc').value
                 })
             });
@@ -564,6 +587,55 @@
             loadDepartments();
         });
         
+        function openEditDept(id, code, name, location, description) {
+            document.getElementById('editDeptId').value = id;
+            document.getElementById('editDeptCode').value = code;
+            document.getElementById('editDeptName').value = name;
+            document.getElementById('editDeptLocation').value = location;
+            document.getElementById('editDeptDesc').value = description;
+            showModal('editDeptModal');
+        }
+
+        async function deleteDepartment(id, name) {
+            if (!confirm('Are you sure you want to delete department "' + name + '"?')) return;
+            var res = await fetch(API + '/api/admin/departments/' + id, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            var data = await res.json();
+            if (res.ok) {
+                alert('Department deleted');
+                loadDepartments();
+            } else {
+                alert(data.detail || 'Failed to delete department');
+            }
+        }
+
+        document.getElementById('editDeptForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var id = document.getElementById('editDeptId').value;
+            var res = await fetch(API + '/api/admin/departments/' + id, {
+                method: 'PUT',
+                headers: Object.assign({}, getHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    code: document.getElementById('editDeptCode').value,
+                    name: document.getElementById('editDeptName').value,
+                    location: document.getElementById('editDeptLocation').value,
+                    description: document.getElementById('editDeptDesc').value
+                })
+            });
+            var data = await res.json();
+            if (res.ok) {
+                closeModal('editDeptModal');
+                loadDepartments();
+            } else {
+                var alert = document.getElementById('editDeptModalAlert');
+                alert.textContent = data.detail || 'Update failed';
+                alert.className = 'alert alert-error';
+                alert.style.display = 'block';
+            }
+        });
+
         checkAuth();
     </script>
 </body>

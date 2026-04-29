@@ -41,12 +41,14 @@ class Department(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     code = Column(String(10), unique=True, nullable=False)
+    location = Column(String(100), nullable=True)
     description = Column(Text)
     manager_id = Column(Integer, ForeignKey("internal_users.id"))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     users = relationship("InternalUser", back_populates="department", foreign_keys=[InternalUser.department_id])
+    
 
 # Suppliers (extended)
 class Supplier(Base):

@@ -81,6 +81,14 @@ class UserLogin(BaseModel):
 class DepartmentCreate(BaseModel):
     name: str
     code: str
+    location: Optional[str] = None
+    description: Optional[str] = None
+
+class DepartmentUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
 
 class SupplierCreate(BaseModel):
     name: str
@@ -188,7 +196,18 @@ async def list_departments(current_user: InternalUser = Depends(get_current_user
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     depts = db.query(Department).filter(Department.is_active == True).all()
-    return [{"id": d.id, "name": d.name, "code": d.code} for d in depts]
+    result = []
+    for d in depts:
+        headcount = db.query(InternalUser).filter(InternalUser.department_id == d.id, InternalUser.is_active == True).count()
+        result.append({
+            "id": d.id,
+            "name": d.name,
+            "code": d.code,
+            "location": d.location,
+            "description": d.description,
+            "headcount": headcount
+        })
+    return result
 
 @app.post("/api/admin/departments")
 async def create_department(data: DepartmentCreate, current_user: InternalUser = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
@@ -196,12 +215,51 @@ async def create_department(data: DepartmentCreate, current_user: InternalUser =
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     if db.query(Department).filter(Department.code == data.code).first():
         raise HTTPException(status_code=400, detail="Department code already exists")
-    dept = Department(name=data.name, code=data.code)
+    dept = Department(name=data.name, code=data.code, location=data.location, description=data.description)
     db.add(dept)
     db.commit()
     db.refresh(dept)
     log_audit(db, current_user.id, "create", "department", dept.id)
-    return {"id": dept.id, "name": dept.name, "code": dept.code}
+    return {"id": dept.id, "name": dept.name, "code": dept.code, "location": dept.location, "description": dept.description}
+
+@app.put("/api/admin/departments/{dept_id}")
+async def update_department(dept_id: int, data: DepartmentUpdate, current_user: InternalUser = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    dept = db.query(Department).filter(Department.id == dept_id).first()
+    if not dept:
+        raise HTTPException(status_code=404, detail="Department not found")
+    if data.name is not None:
+        dept.name = data.name
+    if data.code is not None:
+        # Check code uniqueness if changing
+        if data.code != dept.code and db.query(Department).filter(Department.code == data.code).first():
+            raise HTTPException(status_code=400, detail="Department code already exists")
+        dept.code = data.code
+    if data.location is not None:
+        dept.location = data.location
+    if data.description is not None:
+        dept.description = data.description
+    db.commit()
+    db.refresh(dept)
+    log_audit(db, current_user.id, "update", "department", dept.id)
+    return {"id": dept.id, "name": dept.name, "code": dept.code, "location": dept.location, "description": dept.description}
+
+@app.delete("/api/admin/departments/{dept_id}")
+async def delete_department(dept_id: int, current_user: InternalUser = Depends(get_current_user), db: SessionLocal = Depends(get_db)):
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    dept = db.query(Department).filter(Department.id == dept_id).first()
+    if not dept:
+        raise HTTPException(status_code=404, detail="Department not found")
+    # Check if department has users
+    user_count = db.query(InternalUser).filter(InternalUser.department_id == dept_id).count()
+    if user_count > 0:
+        raise HTTPException(status_code=400, detail=f"Cannot delete department with {user_count} assigned users. Reassign users first.")
+    db.delete(dept)
+    db.commit()
+    log_audit(db, current_user.id, "delete", "department", dept_id)
+    return {"message": "Department deleted"}
 
 # Suppliers
 @app.get("/api/suppliers")
