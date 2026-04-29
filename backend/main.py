@@ -74,9 +74,8 @@ class UserCreate(BaseModel):
     name: str
     department_id: Optional[int] = None
     role: str = "viewer"
-
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class DepartmentCreate(BaseModel):
@@ -103,10 +102,6 @@ class InvitationResponse(BaseModel):
     expires_at: str
 
 # Routes
-@app.get("/")
-async def root():
-    return {"message": "Supplier Hub API", "version": "2.0"}
-
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
@@ -114,7 +109,10 @@ async def health():
 # Authentication
 @app.post("/api/auth/login")
 async def login(data: UserLogin, db: SessionLocal = Depends(get_db)):
-    user = db.query(InternalUser).filter(InternalUser.email == data.email).first()
+    # Try username first, then email
+    user = db.query(InternalUser).filter(
+        (InternalUser.username == data.email) | (InternalUser.email == data.email)
+    ).first()
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not user.is_active:
